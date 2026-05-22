@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>spider_agent · 提交网址</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    label { display: block; margin-top: 0.75rem; font-weight: 600; }
+    input[type="url"], input[type="number"], input[type="text"] { width: 100%; max-width: 40rem; padding: 0.4rem 0.5rem; }
+    .row { margin-top: 0.5rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+    .warn { background: #fff8e6; border: 1px solid #e6c200; padding: 0.75rem; border-radius: 6px; margin: 1rem 0; }
+    .ok { background: #e8f5e9; border: 1px solid #2e7d32; padding: 0.75rem; border-radius: 6px; margin: 1rem 0; }
+    .err { background: #ffebee; border: 1px solid #c62828; padding: 0.75rem; border-radius: 6px; margin: 1rem 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.9rem; }
+    th, td { border: 1px solid #ccc; padding: 0.35rem 0.5rem; text-align: left; }
+    th { background: #f5f5f5; }
+    code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>spider_agent · 提交网址抓取</h1>
+  <p class="warn">
+    仅供个人学习；请控制抓取频率（间隔秒数）、遵守目标站 <code>robots.txt</code> 与版权条款，勿对外提供服务或压测。
+    需先在本机启动 MongoDB：<code>docker compose up -d</code>（默认 <code>mongodb://localhost:27017</code>）。
+  </p>
+
+  {% if mongo_banner %}<p class="err">{{ mongo_banner | safe }}</p>{% endif %}
+
+  {% if error %}<p class="err">{{ error | safe }}</p>{% endif %}
+  {% if message %}<p class="ok">{{ message }}</p>{% endif %}
+
+  {% set fv = form_values or {} %}
+  <form method="post" action="/crawl">
+    <div class="row">
+      <label><input type="radio" name="mode" value="single" {% if (fv.get('mode') or 'single') == 'single' %}checked{% endif %} /> 单页抓取（任意公开网页，正文为通用抽取）</label>
+      <label><input type="radio" name="mode" value="list" {% if fv.get('mode') == 'list' %}checked{% endif %} /> 列表爬取（仅中国新闻网首页/频道，按篇数上限抓取）</label>
+    </div>
+    <label for="start_url">网址</label>
+    <input type="url" id="start_url" name="start_url" required placeholder="https://..." value="{{ fv.get('start_url', default_start) }}" />
+
+    <label for="max_pages">列表模式：最多列表/栏目页数</label>
+    <input type="number" id="max_pages" name="max_pages" min="1" max="50" value="{{ fv.get('max_pages', 1) }}" />
+
+    <label for="max_articles">列表模式：最多文章篇数</label>
+    <input type="number" id="max_articles" name="max_articles" min="1" max="200" value="{{ fv.get('max_articles', 10) }}" />
+
+    <label for="interval">每次 HTTP 后休眠（秒）</label>
+    <input type="number" id="interval" name="interval" min="0.5" max="60" step="0.1" value="{{ fv.get('interval', 1.5) }}" />
+
+    <div><button type="submit">创建任务并写入 MongoDB</button></div>
+  </form>
+
+  {% if last_job_id %}
+  <p>任务 API：<a href="/api/jobs/{{ last_job_id }}"><code>/api/jobs/{{ last_job_id }}</code></a>
+    · <a href="/api/jobs/{{ last_job_id }}/articles">文章 JSON</a></p>
+  {% endif %}
+
+  <h2>最近任务</h2>
+  <table>
+    <thead><tr><th>时间</th><th>模式</th><th>状态</th><th>网址</th><th>API</th></tr></thead>
+    <tbody>
+      {% for j in jobs %}
+      <tr>
+        <td>{{ j.created_at }}</td>
+        <td>{{ j.mode }}</td>
+        <td>{{ j.status }}</td>
+        <td style="max-width:18rem;overflow:hidden;text-overflow:ellipsis">{{ j.input_url }}</td>
+        <td><a href="/api/jobs/{{ j.id }}"><code>{{ j.id[:8] }}…</code></a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">暂无任务</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
