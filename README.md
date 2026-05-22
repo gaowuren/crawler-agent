@@ -1,7 +1,7 @@
 # spider_agent
 
 面向个人学习的轻量爬虫项目：在网页中提交 URL，后台抓取结构化内容并写入 MongoDB；同时保留命令行导出 JSONL。
-
+100% 纯正 Vibe Coding生产代码，AI时代拒绝手搓。
 ## 功能
 
 - **Web 界面**：FastAPI + 表单，支持两种模式  
@@ -105,7 +105,7 @@ python -m src.main --start-url https://www.chinanews.com/ --max-articles 10 --in
 
 ## 合规说明
 
-本项目仅供**个人学习**使用。请遵守目标网站 `robots.txt`、服务条款与版权规定；控制访问频率，勿用于对外数据服务或压测。
+本项目仅供**个人学习**使用。请遵守目标网站 `robots.txt`、服务条款与版权规定；控制访问频率，勿用于对外数据服务或压测!!!
 
 ## 已知限制
 
